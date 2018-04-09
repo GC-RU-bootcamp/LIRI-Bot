@@ -15,14 +15,14 @@ require("dotenv").config();
 
 var commands = [
   "'my-tweets'",
-  "'spotify-this-song' song name",
-  "'movie-this' movie name",
-  "'do-what-it-says'"
+  "'spotify-this-song' <song name>",
+  "'movie-this' <movie name>",
+  "'do-what-it-says' [filename]   defaults to ./random.text'"
 ];
 
 function usageMsg() {
   console.log("");
-  console.log("Usage: node liri-bot.js Request 'Request paramters'");
+  console.log("Usage: node liri-bot.js Request [request parameter]'");
   console.log("Valid requests:");
   for (let index = 0; index < commands.length; index++) {
     const element = commands[index];
@@ -50,8 +50,8 @@ if (argCnt > 3) {
 //   process.exit(1);
 // }
 
-console.log("Request:  " + commandStr);
-console.log("parameter:  " + "'" + parameterStr + "'");
+console.log("Request:  " + commandStr+  "  <" + parameterStr + ">");
+// console.log();
 
 doCommand(commandStr, parameterStr);
 
@@ -75,7 +75,10 @@ function doCommand(commandStr, parameterStr) {
       omdbGet(parameterStr);
       break;
     case "do-what-it-says":
-      doCommandFile("./random.txt");
+    if (!parameterStr) {
+      parameterStr = "./random.txt"; 
+    }
+      doCommandFile(parameterStr);
       break;
     default:
       console.log("Invalid request: " + commandStr + " '" + parameterStr + "'");
@@ -95,7 +98,7 @@ function omdbGet(movieName) {
   let queryURL =
     "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=" + key;
   // queryStr ="http://www.omdbapi.com/?t=remember+the+titans&y=&plot=short&apikey=trilogy"
-  console.log(queryURL);
+  // console.log(queryURL);
   myRequest(queryURL, function(error, response, body) {
     // If the request is successful (i.e. if the response status code is 200)
     if (!error && response.statusCode === 200) {
@@ -133,8 +136,8 @@ function omdbGet(movieName) {
         console.log("    Actors: " + pbody.Actors);
 
         console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<< End Response  ");
-        console.log(JSON.parse(body));
-        console.log("The movie's rating is: " + JSON.parse(body).imdbRating);
+        // console.log(JSON.parse(body));
+        // console.log("The movie's rating is: " + JSON.parse(body).imdbRating);
       } else {
         if (pbody.hasOwnProperty("Error")) {
           console.log("Error: " + pbody.Error);
@@ -159,24 +162,27 @@ function spotifyGet(parameterStr) {
     secret: process.env.SPOTIFY_CLIENT_SECRET
   });
 
-  spotify.search({ type: "track", query: parameterStr , limit: 5}, function(err, data) {
+  spotify.search({ type: "track", query: parameterStr, limit: 5 }, function(
+    err,
+    data
+  ) {
     if (err) {
       return console.log("Error occurred: " + err);
     }
     //console.log("SPOTIFY DATA SEARCH================");
-   // console.log(data);
+    // console.log(data);
     for (let index = 0; index < data.tracks.items.length; index++) {
       const element = data.tracks.items[index];
-     // console.log("=====element======" + index);
-     // console.log(element);
+      // console.log("=====element======" + index);
+      // console.log(element);
       console.log("'spotify-this-song' Response >>>>>>>>>>>>>>>>>>>>>>>>> ");
       console.log("    Artists name: " + element.artists[0].name);
       console.log("    Song name: " + element.name);
       console.log("    Spotify preview link: " + element.external_urls.spotify);
       console.log("    Album name: " + element.album.name);
-      console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<< End Response "+index);
+      console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<< End Response. Song # " + index);
     }
-   // console.log(data.items);
+    // console.log(data.items);
 
     // Artist(s)
 
@@ -192,7 +198,6 @@ function spotifyGet(parameterStr) {
 
 function twitterGet() {
   console.log("In twitterGet " + parameterStr);
-  return;
 
   var tclient_key = {
     consumer_key: process.env.TWITTER_CONSUMER_KEY,
@@ -201,33 +206,53 @@ function twitterGet() {
     access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
   };
 
-  // var tclient = new Twitter({
-  //   consumer_key: process.env.TWITTER_CONSUMER_KEY,
-  //   consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-  //   access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
-  //   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-  // });
 
-  tclient.post(
-    "statuses/update",
-    {
-      status: "Hello World from Node. process id=" //+ process.pid
-    },
-    function(error, tweet, response) {
-      if (error) throw JSON.stringify(error, null, 4);
-      console.log(JSON.stringify(tweet, null, 4)); // Tweet body.
-      console.log(JSON.stringify(response, null, 4)); // Raw response object.
-    }
-  );
 
-  tclient.get("favorites/list", function(error, tweets, response) {
-    if (error) throw JSON.stringify(error, null, 4);
-    console.log("TWEETS ===================");
-    console.log(JSON.stringify(tweets, null, 4)); // The favorites Now called likes.
-    console.log("RESPONSE =================");
-
-    console.log(JSON.stringify(response, null, 4)); // Raw response object.
+  var tclient = new Twitter({
+    consumer_key: process.env.TWITTER_CONSUMER_KEY,
+    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+    access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
   });
+  var params = {count:20};
+  // tclient.get("direct_messages/events/list", function(error, tweets, response) {
+  tclient.get("statuses/user_timeline", params, function(error, tweets, response) {
+    if (error) throw JSON.stringify(error, null, 4);
+    // console.log("TWEETS ===================");
+    // console.log(JSON.stringify(tweets, null, 4)); // The favorites Now called likes.
+    // console.log("RESPONSE =================");
+
+    // console.log(JSON.stringify(response, null, 4)); // Raw response object.
+    console.log("'my-tweets' Response >>>>>>>>>>>>>>>>>>>>>>>>> ");
+
+    for (var index = 0; index < tweets.length; index++) {
+      const element = tweets[index];
+      console.log("    Msg: '"  +element.text + "'     Created: " + element.created_at); 
+    }
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<< End Response  Cnt:" + index);
+
+  });
+
+  // tclient.post(
+  //   "statuses/update",
+  //   {
+  //     status: "Hello World from Node. process id=" //+ process.pid
+  //   },
+  //   function(error, tweet, response) {
+  //     if (error) throw JSON.stringify(error, null, 4);
+  //     console.log(JSON.stringify(tweet, null, 4)); // Tweet body.
+  //     console.log(JSON.stringify(response, null, 4)); // Raw response object.
+  //   }
+  // );
+
+  // tclient.get("favorites/list", function(error, tweets, response) {
+  //   if (error) throw JSON.stringify(error, null, 4);
+  //   console.log("TWEETS ===================");
+  //   console.log(JSON.stringify(tweets, null, 4)); // The favorites Now called likes.
+  //   console.log("RESPONSE =================");
+
+  //   console.log(JSON.stringify(response, null, 4)); // Raw response object.
+  // });
 } // end twitterGet
 
 function doCommandFile(file) {

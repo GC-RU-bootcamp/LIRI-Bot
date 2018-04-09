@@ -12,8 +12,8 @@
       "program": "${file}",
       "stopOnEntry": true,
       "console":"integratedTerminal",
-      // "args": [ "my-tweets" ],
-       "args": [ "spotify-this-song", "smoke", "on", "the" , "water"  ],
+      "args": [ "my-tweets" ],
+      //  "args": [ "spotify-this-song", "smoke", "on", "the" , "water"  ],
       //  "args": [ "movie-this", "Forrest", "Gump" ],
       // "args": [ "do-what-it-says" ],
     }
